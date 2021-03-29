@@ -8,15 +8,19 @@ public class HexCell : MonoBehaviour
 
     public Color color;
 
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField]
+    private HexCell[] neighbours;
+
+
+    public HexCell GetNeighbour (HexDirection direction)
     {
-        
+        return neighbours[(int)direction];
     }
 
-    // Update is called once per frame
-    void Update()
+    public void SetNeighbour (HexDirection direction, HexCell cell)
     {
-        
+        neighbours[(int)direction] = cell;
+        cell.neighbours[(int)direction.Opposite()] = this;
     }
+    
 }

@@ -63,6 +63,48 @@ public class HexGrid : MonoBehaviour
         cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, z);
         cell.color = defaultColor;
 
+        if (x > 0)
+        {
+            cell.SetNeighbour(HexDirection.W, cells[i - 1]);
+        }
+
+        if(z > 0)
+        {
+            if ((z & 1) == 0)
+            {
+                /*
+                What does z & 1 do?
+
+                While && is the boolean AND operator, & is the bitwise AND operator. 
+                It performs the same logic, but on each individual pair of bits of its 
+                operands. So both bits of a pair need to be 1 for the result to be 1.
+                For example, 10101010 & 00001111 yields 00001010.
+
+                Internally, numbers are binary. They only use 0s and 1s. In binary, 
+                the sequence 1, 2, 3, 4 is written as 1, 10, 11, 100. As you can see, 
+                even number always have 0 as the least significant digit.
+        
+                We use the binary AND as a mask, ignoring everything except the first bit. 
+                If the result is 0, then we have an even number.
+                */
+
+                cell.SetNeighbour(HexDirection.SE, cells[i - width]);
+                if (x > 0)
+                {
+                    cell.SetNeighbour(HexDirection.SW, cells[i - width - 1]);
+                }
+            }
+
+            else
+            {
+                cell.SetNeighbour(HexDirection.SW, cells[i - width]);
+                if (x < width - 1)
+                {
+                    cell.SetNeighbour(HexDirection.SE, cells[i - width + 1]);
+                }
+            }
+
+        }
 
         Text label = Instantiate<Text>(cellLabelPrefab);
         label.rectTransform.SetParent(gridCanvas.transform, false);

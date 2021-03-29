@@ -41,16 +41,39 @@ public class HexMesh : MonoBehaviour
 
     void Triangulate(HexCell cell)
     {
-        Vector3 center = cell.transform.localPosition;
-        for (int i = 0; i < 6; i++)
+        for(HexDirection d = HexDirection.NE; d <= HexDirection.NW; d++)
         {
-            AddTriangle(
-                center,
-                center + HexMetrics.corners[i],
-                center + HexMetrics.corners[i + 1]);
+            Triangulate(d, cell);
+        }
+    }
 
-            AddTriangleColor(cell.color);
-        };
+    void Triangulate(HexDirection direction, HexCell cell)
+    {
+        Vector3 center = cell.transform.localPosition;
+        AddTriangle(
+            center,
+            center + HexMetrics.GetFirstCorner(direction),
+            center + HexMetrics.GetSecondCorner(direction));
+
+        HexCell prevNeighbour = cell.GetNeighbour(direction.Previous()) ?? cell;
+        HexCell neighbour = cell.GetNeighbour(direction) ?? cell;
+        HexCell nextNeighbour = cell.GetNeighbour(direction.Next()) ?? cell;
+
+        /*
+        What does ?? do?
+
+        This is known as the null-coalescing operator. Simply put, a ?? b is a shorter alternative for a != null ? a : b.
+
+        There are some shenanigans here, because Unity does custom work when comparing something with components. 
+        This operator bypasses that and does and honest comparison with null. But that's only an issue when you're destroying objects.
+        */
+        
+        AddTriangleColor(
+            cell.color, 
+            (cell.color + prevNeighbour.color + neighbour.color) / 3f,
+            (cell.color + nextNeighbour.color + neighbour.color) / 3f
+            );
+        
     }
 
     void AddTriangleColor(Color color)
@@ -58,6 +81,14 @@ public class HexMesh : MonoBehaviour
         colors.Add(color);
         colors.Add(color);
         colors.Add(color);
+
+    }
+
+    void AddTriangleColor(Color c1, Color c2, Color c3)
+    {
+        colors.Add(c1);
+        colors.Add(c2);
+        colors.Add(c3);
 
     }
 
