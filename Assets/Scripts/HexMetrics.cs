@@ -2,17 +2,15 @@
 
 
 
-//=================================\\
-//
-//  Left at point 5
-//  https://catlikecoding.com/unity/tutorials/hex-map/part-1/
-//
-//=================================\\
-
 public static class HexMetrics
 {
     public const float outerRadius = 10f;
     public const float innerRadius = outerRadius * 0.866025404f;
+
+    public const float solidFactor = 0.75f;
+    public const float blendFactor = 1f - solidFactor;
+
+    public const float elevationStep = 5f;
 
     private static Vector3[] corners =
     {
@@ -33,6 +31,21 @@ public static class HexMetrics
     public static Vector3 GetSecondCorner(HexDirection d)
     {
         return corners[(int)d + 1];
+    }
+    public static Vector3 GetFirstSolidCorner(HexDirection direction)
+    {
+        return corners[(int)direction] * solidFactor;
+    }
+
+    public static Vector3 GetSecondSolidCorner (HexDirection direction)
+    {
+        return corners[(int)direction + 1] * solidFactor;
+    }
+
+    public static Vector3 GetBridge(HexDirection direction)
+    {
+        return (corners[(int)direction] + corners[(int)direction + 1]) *
+            blendFactor;
     }
 
 }
