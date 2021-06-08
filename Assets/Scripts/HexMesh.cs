@@ -15,6 +15,8 @@ public class HexMesh : MonoBehaviour
     public const float solidFactor = 0.75f;
     public const float blendFactor = 1f - solidFactor;
 
+    
+
     private void Awake()
     {
         GetComponent<MeshFilter>().mesh = hexMesh = new Mesh();
@@ -64,44 +66,7 @@ public class HexMesh : MonoBehaviour
             TriangulateConnection(direction, cell, v1, v2);
         }
 
-        /*
-        Vector3 bridge = HexMetrics.GetBridge(direction);
-        Vector3 v3 = v1 + bridge;
-        Vector3 v4 = v2 + bridge;
-
-        AddQuad(v1, v2, v3, v4);
-
-        HexCell prevNeighbour = cell.GetNeighbour(direction.Previous()) ?? cell;
-        HexCell neighbour = cell.GetNeighbour(direction) ?? cell;
-        HexCell nextNeighbour = cell.GetNeighbour(direction.Next()) ?? cell;
-
-        /*
-        What does ?? do?
-
-        This is known as the null-coalescing operator. Simply put, a ?? b is a shorter alternative for a != null ? a : b.
-
-        There are some shenanigans here, because Unity does custom work when comparing something with components. 
-        This operator bypasses that and does and honest comparison with null. But that's only an issue when you're destroying objects.
-        */
-
-        /*
-        
-        Color bridgeColor = (cell.color + neighbour.color) * 0.5f;
-        AddQuadColor(cell.color, bridgeColor);
-
-        AddTriangle(v1, center + HexMetrics.GetFirstCorner(direction), v3);
-        AddTriangleColor(
-            cell.color,
-            (cell.color + prevNeighbour.color + neighbour.color) / 3f,
-            bridgeColor);
-
-        AddTriangle(v2, v4, center + HexMetrics.GetSecondCorner(direction));
-        AddTriangleColor(
-            cell.color,
-            bridgeColor,
-            (cell.color + neighbour.color + nextNeighbour.color) / 3f);
-        */
-
+  
     }
 
     private void TriangulateConnection(HexDirection direction, HexCell cell, Vector3 v1, Vector3 v2)
@@ -114,8 +79,15 @@ public class HexMesh : MonoBehaviour
         Vector3 v4 = v2 + bridge;
         v3.y = v4.y = neighbour.Elevation * HexMetrics.elevationStep;
 
-        AddQuad(v1, v2, v3, v4);
-        AddQuadColor(cell.color, neighbour.color);
+        if (cell.GetEdgeType(direction) == HexEdgeType.Slope)
+        {
+            TriangulateEdgeTerraces(v1, v2, cell, v3, v4, neighbour);
+        }
+        else
+        {
+            AddQuad(v1, v2, v3, v4);
+            AddQuadColor(cell.color, neighbour.color);
+        }
 
         HexCell nextNeighbour = cell.GetNeighbour(direction.Next());
         if(direction <= HexDirection.E && nextNeighbour != null)
@@ -126,6 +98,33 @@ public class HexMesh : MonoBehaviour
             AddTriangleColor(cell.color, neighbour.color, nextNeighbour.color);
 
         }
+    }
+
+    private void TriangulateEdgeTerraces(Vector3 beginLeft, Vector3 beginRight, HexCell beginCell, Vector3 endLeft, Vector3 endRight, HexCell endCell)
+    {
+        Vector3 v3 = HexMetrics.TerraceLerp(beginLeft, endLeft, 1);
+        Vector3 v4 = HexMetrics.TerraceLerp(beginRight, endRight, 1);
+        Color c2 = HexMetrics.TerraceLerp(beginCell.color, endCell.color, 1);
+
+        AddQuad(beginLeft, beginRight, v3, v4);
+        AddQuadColor(beginCell.color, c2);
+
+        for (int i = 2; i < HexMetrics.terraceSteps; i++)
+        {
+            Vector3 v1 = v3;
+            Vector3 v2 = v4;
+            Color c1 = c2;
+            v3 = HexMetrics.TerraceLerp(beginLeft, endLeft, i);
+            v4 = HexMetrics.TerraceLerp(beginRight, endRight, i);
+            c2 = HexMetrics.TerraceLerp(beginCell.color, endCell.color, i);
+
+            AddQuad(v1, v2, v3, v4);
+            AddQuadColor(c1, c2);
+
+        }
+
+        AddQuad(v3, v4, endLeft, endRight);
+        AddQuadColor(c2, endCell.color);
     }
 
     void AddTriangleColor(Color color)
